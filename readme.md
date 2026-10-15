@@ -378,7 +378,9 @@ Licensed under **[Creative Commons BY-NC 4.0](https://creativecommons.org/licens
 
 ## Credits
 
-**Project:** Ultron 2.0
+Made By Pedja
+
+**Project:** Ultron 2.0 work in progress
 
 
 Third-party component notices are listed in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES/README.md).
