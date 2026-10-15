@@ -42,4 +42,5 @@ Bundled Vosk model files are available in this local copy but are ignored by Git
 The application can download its wake-word model through its existing setup flow.
 The published UI bundles remain included; `node_modules` is not needed to use them.
 
-No GitHub repository has been created or uploaded by preparing this folder.
+Publish the reviewed Git history rather than uploading the entire local folder,
+which may contain ignored files created when the application runs.
