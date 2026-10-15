@@ -1,0 +1,111 @@
+# ── Ultron — what never belongs in the repository ──────────────────────────
+# Everything listed here is created by the app on first run. A fresh clone with
+# none of it present boots straight to the setup screen, which is the intended
+# first experience — so nothing here needs to be committed, and some of it must
+# never be.
+
+# ── Secrets. Committing any of these publishes them. ──────────────────────────
+# your Gemini API key, plus per-plugin credentials
+config/api_keys.json
+# the dashboard's TLS private key and certificate
+config/certs/
+# a LINKED WhatsApp session
+config/whatsapp_web/
+**/token*.json
+**/client_secret*.json
+*credentials*.json
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# ── Personal data the assistant accumulates about you ─────────────────────────
+memory/long_term.json
+memory/*.db
+# Workspace conversations, saved results, activity and provider caches
+config/workspace/
+
+# ── Python build noise ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Editors and operating systems ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Runtime output ────────────────────────────────────────────────────────────
+*.log
+logs/
+downloads/
+screenshots/
+
+# Local audit checkouts, recovery snapshots and personal runtime state
+.audit/
+backups/
+telegram_temp/
+audio_state.json
+last_movie_results.json
+vosk_model/
+vosk_model.zip
+node_modules/
+
+# User-bound integration credentials and private provider state
+config/integrations/
+
+# Account status, preferences and temporary credential writes
+config/*.json
+config/*.tmp
+!config/*.example.json
+**/*credentials*.json
+**/*credentials*.json.*
+**/client_secret*.json*
+**/token*.json*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.session
+**/*.session-journal
+.claude/
+.codex/
+.mcp.json
+
+# Personal activity and generated work
+memory/*.json
+memory/*.json.*
+memory/*.sqlite*
+audio_aliases.json
+Projects/*/db/
+Projects/*/cache/
+Projects/*/generated_sites/
+Projects/*/omni_done.mp3
+assets/holo/state/
+assets/holo/holo.json
+test_audio.wav
+podesavanja.txt
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.bak
+*.orig
+*.tmp
+
+# Speech-recognition diagnostics can contain transcripts
+vosk_log.txt

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "ultron-mail-mcp": {
+      "command": "python",
+      "args": [
+        ".agents/plugins/jarvis_mail/jarvis_mail_mcp.py"
+      ],
+      "env": {}
+    }
+  }
+}

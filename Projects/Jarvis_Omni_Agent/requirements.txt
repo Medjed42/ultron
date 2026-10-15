@@ -1,0 +1,5 @@
+# Uses the same Gemini runtime as Ultron.
+-r ../../requirements.txt
+fastapi
+uvicorn
+pydantic

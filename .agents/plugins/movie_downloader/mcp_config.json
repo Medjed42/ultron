@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "movie-downloader-mcp": {
+      "command": "python",
+      "args": [
+        ".agents/plugins/movie_downloader/movie_downloader_mcp.py"
+      ],
+      "env": {}
+    }
+  }
+}

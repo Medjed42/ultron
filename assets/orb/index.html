@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Ultron holographic orb</title>
+<style>
+*{box-sizing:border-box}html,body,#orb{margin:0;width:100%;height:100%;overflow:hidden;background:#030406}
+#orb{position:relative;touch-action:none;outline:none;cursor:grab}#orb:active{cursor:grabbing}
+#orb:focus-visible{outline:1px solid #6bd5e6;outline-offset:-3px}canvas{display:block}
+.hint{position:absolute;bottom:8px;width:100%;text-align:center;pointer-events:none;color:#9c876c;font:10px 'Segoe UI',sans-serif;letter-spacing:.7px}
+#failure{display:none;position:absolute;inset:30%;color:#d0b58e;font:14px 'Segoe UI',sans-serif;text-align:center}
+@media(max-width:380px){.hint{font-size:9px;letter-spacing:0}}
+</style></head><body>
+<div id="orb" tabindex="0" role="img" aria-label="Interactive Ultron 3D orb. Drag to rotate, scroll or pinch to zoom. R resets; plus and minus zoom when focused."></div>
+<div class="hint">DRAG TO ROTATE · SCROLL / PINCH TO ZOOM · R TO RESET</div>
+<div id="failure" role="status">3D rendering is unavailable. Ultron's controls remain available.</div>
+<script src="orb.bundle.js"></script></body></html>

@@ -1,0 +1,5 @@
+import re
+with open('.agents/plugins/movie_downloader/movie_downloader.py', 'r', encoding='utf-8') as f: content = f.read()
+new_auth = '''def get_qb_session():\n    import requests\n    import time\n    import subprocess\n    session = requests.Session()\n    login_url = "http://localhost:8080/api/v2/auth/login"\n    for attempt in range(2):\n        try:\n            res = session.post(login_url, data={"username": "admin", "password": "123456"}, timeout=5)\n            if res.ok:\n                return session\n        except:\n            if attempt == 0:\n                print("qBittorrent nije pokrenut. Pokrecem ga...")\n                try:\n                    subprocess.Popen(["qbittorrent.exe"])\n                    time.sleep(5)\n                except:\n                    pass\n    return None'''
+content = re.sub(r'def get_qb_session\(\):.*?return None', new_auth, content, flags=re.DOTALL)
+with open('.agents/plugins/movie_downloader/movie_downloader.py', 'w', encoding='utf-8') as f: f.write(content)

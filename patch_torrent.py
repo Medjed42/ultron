@@ -1,0 +1,5 @@
+import re
+with open('.agents/plugins/movie_downloader/movie_downloader.py', 'r', encoding='utf-8') as f: content = f.read()
+content = re.sub(r'        magnet_link = "".*?except Exception as e:', '''        magnet_link = ""\n        torrent_link = ""\n        try:\n            detail_soup = BeautifulSoup(requests.get(detail_url, headers=headers, timeout=10).text, 'html.parser')\n            for a in detail_soup.find_all("a"):\n                href = a.get("href", "")\n                if href.startswith("magnet:"):\n                    magnet_link = href\n                elif ".torrent" in href:\n                    torrent_link = href\n        except Exception as e:''', content, flags=re.DOTALL)
+content = re.sub(r'            results\.append\(\{.*?"size": size\n            \}\)', '''            results.append({\n                "title": title,\n                "magnet": magnet_link,\n                "torrent": torrent_link,\n                "seeders": seeders,\n                "size": size\n            })''', content, flags=re.DOTALL)
+with open('.agents/plugins/movie_downloader/movie_downloader.py', 'w', encoding='utf-8') as f: f.write(content)

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ultron Code Generation Studio</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Header / HUD Navbar -->
+  <header class="hud-header">
+    <div class="logo-area">
+      <div class="reactor-icon">
+        <div class="reactor-core"></div>
+      </div>
+      <div>
+        <h1 class="brand-title">ULTRON <span>CODE STUDIO</span></h1>
+        <p class="brand-subtitle">Powered by Antigravity Smart Engine</p>
+      </div>
+    </div>
+    <div class="header-status">
+      <span class="status-indicator">
+        <span class="pulse-dot"></span> SMART ENGINE ONLINE
+      </span>
+      <span class="badge system-badge"><i class="fas fa-microchip"></i> Python 3.14 Sandbox</span>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="studio-container">
+    <!-- Left Sidebar: Templates & Custom Generator -->
+    <aside class="sidebar-panel">
+      <!-- Tabs -->
+      <div class="sidebar-tabs">
+        <button class="tab-btn active" id="tabTemplatesBtn" onclick="switchSidebarTab('templates')">
+          <i class="fas fa-layer-group"></i> Templates
+        </button>
+        <button class="tab-btn" id="tabCustomBtn" onclick="switchSidebarTab('custom')">
+          <i class="fas fa-wand-magic-sparkles"></i> Custom Generator
+        </button>
+      </div>
+
+      <!-- Tab Content: Templates List -->
+      <div id="templatesTabContent" class="tab-pane active">
+        <div class="pane-header">
+          <h3>Architectures & Algorithms</h3>
+          <span class="pane-sub">Select template to load & execute</span>
+        </div>
+        <div id="templatesList" class="templates-grid">
+          <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading templates...</div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Custom Generator Wizard -->
+      <div id="customTabContent" class="tab-pane">
+        <div class="pane-header">
+          <h3>Synthesize Custom Code</h3>
+          <span class="pane-sub">Parametric specification builder</span>
+        </div>
+        <form id="customGenForm" onsubmit="handleCustomGenerate(event)">
+          <div class="form-group">
+            <label for="taskType"><i class="fas fa-tag"></i> Task / Domain</label>
+            <input type="text" id="taskType" value="Autonomous Data Pipeline" placeholder="e.g. Memory Cache, Web Scraper" required>
+          </div>
+
+          <div class="form-group">
+            <label for="codeLang"><i class="fas fa-code"></i> Language</label>
+            <select id="codeLang">
+              <option value="python" selected>Python 3</option>
+              <option value="javascript">JavaScript / Node.js</option>
+              <option value="bash">Bash / Shell</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="architecture"><i class="fas fa-sitemap"></i> Design Pattern</label>
+            <select id="architecture">
+              <option value="Modular Controller" selected>Modular Controller (Clean OOP)</option>
+              <option value="Event-Driven Pipeline">Event-Driven Pipeline</option>
+              <option value="Microservice Endpoint">Microservice Endpoint</option>
+              <option value="Command Pattern CLI">Command Pattern CLI</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fas fa-check-double"></i> Included Features</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" name="feat" value="Structured Logging" checked> Structured Logging</label>
+              <label><input type="checkbox" name="feat" value="Error Handling & Retries" checked> Robust Error Handling</label>
+              <label><input type="checkbox" name="feat" value="Performance Benchmark" checked> Performance Benchmark</label>
+              <label><input type="checkbox" name="feat" value="Type Annotations" checked> Type Annotations</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="userPrompt"><i class="fas fa-comment-dots"></i> Custom Instructions (Optional)</label>
+            <textarea id="userPrompt" rows="3" placeholder="Provide extra requirements or constraints..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="generateBtn">
+            <i class="fas fa-bolt"></i> Synthesize Code
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <!-- Right Workspace: Code Editor & Execution HUD -->
+    <section class="workspace-panel">
+      <!-- Editor Controls Bar -->
+      <div class="editor-toolbar">
+        <div class="file-info">
+          <i class="fab fa-python file-icon"></i>
+          <span id="currentFileName" class="file-name">template_script.py</span>
+          <span id="activeLanguageBadge" class="badge lang-badge">Python</span>
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn btn-success" id="runCodeBtn" onclick="runCurrentCode()" title="Execute code in local sandbox (Ctrl+Enter)">
+            <i class="fas fa-play"></i> Run Code
+          </button>
+          <button class="btn btn-info" id="analyzeCodeBtn" onclick="analyzeCurrentCode()" title="Inspect AST & Cyclomatic complexity">
+            <i class="fas fa-chart-line"></i> Analyze Code
+          </button>
+          <button class="btn btn-secondary" onclick="copyCode()" title="Copy to clipboard">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+          <button class="btn btn-secondary" onclick="downloadCode()" title="Download file">
+            <i class="fas fa-download"></i> Save
+          </button>
+        </div>
+      </div>
+
+      <!-- Code Editor Canvas -->
+      <div class="editor-wrapper">
+        <textarea id="codeEditor" spellcheck="false" placeholder="# Write or generate code here..."></textarea>
+      </div>
+
+      <!-- Bottom Split: Terminal Output & AST Analytics -->
+      <div class="bottom-hud">
+        <!-- Terminal Console -->
+        <div class="terminal-card">
+          <div class="card-header">
+            <span><i class="fas fa-terminal"></i> Execution Sandbox Terminal</span>
+            <div class="terminal-meta">
+              <span id="execStatusPill" class="status-pill status-ready">IDLE</span>
+              <span id="execDuration" class="exec-time">0 ms</span>
+              <button class="icon-btn" onclick="clearTerminal()" title="Clear terminal"><i class="fas fa-trash-can"></i></button>
+            </div>
+          </div>
+          <div class="terminal-body" id="terminalOutput">
+            <p class="term-greeting">Ultron Python Sandbox Ready. Click [Run Code] or press Ctrl+Enter to execute.</p>
+          </div>
+        </div>
+
+        <!-- Code Analytics Metrics HUD -->
+        <div class="metrics-card">
+          <div class="card-header">
+            <span><i class="fas fa-brain"></i> AST Structural Metrics</span>
+            <span class="badge hud-mini-badge">Static Analysis</span>
+          </div>
+          <div class="metrics-body" id="metricsContent">
+            <div class="metric-row">
+              <span class="metric-label">Lines (Total / Code):</span>
+              <span class="metric-val" id="metricLines">-- / --</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Defined Functions:</span>
+              <span class="metric-val" id="metricFuncs">--</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Defined Classes:</span>
+              <span class="metric-val" id="metricClasses">--</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Imports:</span>
+              <span class="metric-val" id="metricImports">--</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Cyclomatic Score:</span>
+              <span class="metric-val" id="metricCyclomatic">--</span>
+            </div>
+            <div class="metric-row">
+              <span class="metric-label">Docstring Coverage:</span>
+              <span class="metric-val" id="metricDocstring">--%</span>
+            </div>
+            <div class="metric-banner" id="metricComplexityBanner">
+              Analyze code to inspect complexity rating.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

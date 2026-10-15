@@ -1,0 +1,9 @@
+{
+  "name": "ultron-local-orb", "version": "1.0.0", "private": true,
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --minify --format=iife --target=chrome110 --outfile=orb.bundle.js --legal-comments=linked",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {"three": "0.185.1"},
+  "devDependencies": {"@types/three": "0.185.0", "typescript": "5.9.3", "esbuild": "0.25.12"}
+}

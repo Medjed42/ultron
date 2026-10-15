@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>ULTRON Orbital Matrix</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #020306;
+      font-family: 'Consolas', 'Segoe UI', monospace;
+      color: #9fe7ff;
+    }
+
+    #space-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    #graph-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+
+    #overlay-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    /* HUD Layer */
+    .hud-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px 20px;
+    }
+
+    .hud-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: auto;
+    }
+
+    .brand-block {
+      background: rgba(3, 8, 16, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.32);
+      border-radius: 6px;
+      padding: 10px 16px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.75), 0 0 16px rgba(0, 240, 255, 0.15);
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 2.2px;
+      color: #00f0ff;
+      text-shadow: 0 0 12px rgba(0, 240, 255, 0.7);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-subtitle {
+      font-size: 9.5px;
+      letter-spacing: 1.5px;
+      color: #5b8cff;
+      margin-top: 3px;
+      text-transform: uppercase;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      color: #00f0ff;
+      transition: all 0.3s ease;
+      margin-top: 6px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #00f0ff;
+      box-shadow: 0 0 8px #00f0ff;
+      animation: pulse-dot 1.8s infinite;
+    }
+
+    .status-badge.working {
+      background: rgba(255, 179, 71, 0.18);
+      border-color: rgba(255, 179, 71, 0.7);
+      color: #ffb347;
+    }
+    .status-badge.working .status-dot {
+      background: #ffb347;
+      box-shadow: 0 0 14px #ffb347;
+      animation: pulse-dot-fast 0.6s infinite;
+    }
+
+    .status-badge.speaking {
+      background: rgba(0, 255, 157, 0.18);
+      border-color: rgba(0, 255, 157, 0.7);
+      color: #00ff9d;
+    }
+    .status-badge.speaking .status-dot {
+      background: #00ff9d;
+      box-shadow: 0 0 14px #00ff9d;
+      animation: pulse-dot-fast 0.5s infinite;
+    }
+
+    .orbit-filters {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      pointer-events: auto;
+    }
+
+    .filter-btn {
+      background: rgba(5, 14, 30, 0.8);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      color: #6db6ff;
+      font-family: inherit;
+      font-size: 9px;
+      letter-spacing: 0.8px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: rgba(0, 240, 255, 0.22);
+      border-color: #00f0ff;
+      color: #ffffff;
+      box-shadow: 0 0 8px rgba(0, 240, 255, 0.35);
+    }
+
+    .hud-controls {
+      display: flex;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .hud-btn {
+      background: rgba(4, 11, 24, 0.88);
+      border: 1px solid rgba(0, 240, 255, 0.28);
+      color: #8ad8ff;
+      padding: 8px 14px;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 1.2px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(8px);
+      text-transform: uppercase;
+    }
+    .hud-btn:hover {
+      background: rgba(0, 240, 255, 0.2);
+      border-color: #00f0ff;
+      color: #ffffff;
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.5);
+    }
+    .hud-btn:active {
+      transform: scale(0.96);
+    }
+    .hud-btn.close-btn {
+      border-color: rgba(255, 107, 107, 0.45);
+      color: #ff9b9b;
+    }
+    .hud-btn.close-btn:hover {
+      background: rgba(255, 107, 107, 0.25);
+      border-color: #ff6b6b;
+      color: #ffffff;
+      box-shadow: 0 0 14px rgba(255, 107, 107, 0.6);
+    }
+
+    .hud-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      pointer-events: auto;
+    }
+
+    .instructions-card {
+      background: rgba(3, 8, 16, 0.75);
+      border: 1px solid rgba(0, 240, 255, 0.18);
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: #6da2ff;
+      backdrop-filter: blur(6px);
+    }
+
+    .activity-meter {
+      background: rgba(3, 8, 16, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      border-radius: 4px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 10px;
+      letter-spacing: 1.2px;
+      backdrop-filter: blur(8px);
+    }
+
+    .meter-bar-container {
+      width: 130px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      overflow: hidden;
+      border: 1px solid rgba(0, 240, 255, 0.25);
+    }
+
+    .meter-bar {
+      height: 100%;
+      width: 20%;
+      background: linear-gradient(90deg, #00f0ff, #5b8cff);
+      box-shadow: 0 0 8px #00f0ff;
+      border-radius: 3px;
+      transition: width 0.4s ease, background 0.4s ease;
+    }
+
+    .node-card {
+      position: absolute;
+      display: none;
+      pointer-events: none;
+      z-index: 100;
+      background: rgba(5, 12, 26, 0.94);
+      border: 1px solid #00f0ff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85), 0 0 16px rgba(0, 240, 255, 0.4);
+      border-radius: 6px;
+      padding: 10px 14px;
+      min-width: 220px;
+      max-width: 320px;
+      backdrop-filter: blur(10px);
+      transform: translate(-50%, -120%);
+    }
+
+    .node-card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 3px;
+    }
+
+    .node-card-type {
+      font-size: 9px;
+      color: #00f0ff;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .node-card-desc {
+      font-size: 10px;
+      color: #a0c0e0;
+      line-height: 1.4;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 0.4; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+    @keyframes pulse-dot-fast {
+      0%, 100% { opacity: 0.5; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.3); }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="space-canvas"></canvas>
+  <div id="graph-container"></div>
+  <canvas id="overlay-canvas"></canvas>
+
+  <!-- HUD Overlay -->
+  <div class="hud-layer">
+    <div class="hud-header">
+      <div class="brand-block">
+        <div class="brand-title" id="orbit-title">
+          <span>◈</span> ULTRON ORBIT
+        </div>
+        <div class="brand-subtitle">NEURAL SUBSYSTEM &amp; DEVICE CONSTELLATION</div>
+        <div class="status-badge" id="status-badge">
+          <span class="status-dot"></span>
+          <span id="status-text">MONITORING // STANDBY</span>
+        </div>
+
+        <div class="orbit-filters">
+          <button class="filter-btn active" data-target="all">ALL</button>
+          <button class="filter-btn" data-target="connections">CONNECTIONS</button>
+          <button class="filter-btn" data-target="smartthings">SMART THINGS / TV</button>
+          <button class="filter-btn" data-target="brain">BRAIN &amp; AI</button>
+          <button class="filter-btn" data-target="plugins">PLUGINS</button>
+          <button class="filter-btn" data-target="control">OS CONTROL</button>
+          <button class="filter-btn" data-target="movie_dl">TORRENT</button>
+        </div>
+      </div>
+
+      <div class="hud-controls">
+        <button class="hud-btn" id="btn-pulse" title="Trigger data pulse transmission">⚡ CHARGE</button>
+        <button class="hud-btn" id="btn-reset" title="Reset 3D camera position">⟲ RESET</button>
+        <button class="hud-btn" id="btn-expand" title="Toggle Fullscreen / Expanded View">⛶ EXPAND</button>
+        <button class="hud-btn close-btn" id="btn-close" title="Return to HUD">✕ CLOSE</button>
+      </div>
+    </div>
+
+    <div class="hud-footer">
+      <div class="instructions-card">
+        DRAG TO ROTATE · SCROLL TO ZOOM · CLICK NODE TO FLY IN · HOVER FOR DEVICE DETAILS
+      </div>
+
+      <div class="activity-meter">
+        <span id="flux-label">PARTICLE FLUX</span>
+        <div class="meter-bar-container">
+          <div class="meter-bar" id="meter-bar"></div>
+        </div>
+        <span id="flux-val">IDLE</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="node-card" id="node-card">
+    <div class="node-card-title" id="card-title">Node Title</div>
+    <div class="node-card-type" id="card-type">SUBSYSTEM</div>
+    <div class="node-card-desc" id="card-desc">Description of the node</div>
+  </div>
+
+  <script src="3d-force-graph.min.js"></script>
+  <script>
+    let assistantName = 'ULTRON';
+
+    // ── Starfield Background Canvas ──────────────────────────────────────────
+    (function initStarfield() {
+      const canvas = document.getElementById('space-canvas');
+      const ctx = canvas.getContext('2d');
+      let stars = [];
+      const STAR_COUNT = 360;
+
+      function resize(w, h) {
+        canvas.width = w || window.innerWidth;
+        canvas.height = h || window.innerHeight;
+        stars = [];
+        for (let i = 0; i < STAR_COUNT; i++) {
+          stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 1.5 + 0.4,
+            alpha: Math.random() * 0.8 + 0.2,
+            speed: Math.random() * 0.015 + 0.005,
+            phase: Math.random() * Math.PI * 2
+          });
+        }
+      }
+
+      window.resizeSpaceCanvas = resize;
+      window.addEventListener('resize', () => resize());
+      resize();
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Deep space cosmic gradient
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const grad = ctx.createRadialGradient(cx, cy, 20, cx, cy, Math.max(cx, cy));
+        grad.addColorStop(0, '#060a18');
+        grad.addColorStop(0.55, '#03060e');
+        grad.addColorStop(1, '#020306');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const now = Date.now() * 0.001;
+        for (let s of stars) {
+          const a = s.alpha * (0.6 + 0.4 * Math.sin(now * s.speed * 20 + s.phase));
+          ctx.fillStyle = `rgba(160, 225, 255, ${a})`;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        requestAnimationFrame(draw);
+      }
+      requestAnimationFrame(draw);
+    })();
+
+    // ── Complete Hierarchical Orbital Data Model ─────────────────────────────
+    // Central Core -> Cognitive Brain & Primary Hubs -> Plugins -> Devices & Satellites
+    const NODES = [
+      // ── Tier 0: Central Star / Nexus ──
+      { id: 'core', name: 'NEXUS CORE', cluster: 'core', kind: 'core', val: 16, color: '#00f0ff', desc: 'Central neural orchestrator coordinating all cognitive faculties, plugins and smart devices.' },
+
+      // ── Tier 1: Cognitive Brain & Primary Facets ──
+      { id: 'brain', name: 'Gemini Live 3.1 Brain', cluster: 'brain', kind: 'faculty', val: 11, color: '#7fe7ff', desc: 'Real-time multimodal neural intelligence, streaming speech reasoning and tool routing.' },
+      { id: 'claude_brain', name: 'Claude Opus Co-Brain', cluster: 'brain', kind: 'faculty', val: 6.5, color: '#e0a96d', desc: 'Deep reasoning, complex coding, and fallback cognitive orchestration.' },
+      { id: 'voice_dsp', name: 'Voice & Audio DSP', cluster: 'io', kind: 'faculty', val: 7.5, color: '#5b8cff', desc: 'Microphone input, Vosk acoustic detector, push-to-talk, and speech synthesis.' },
+      { id: 'vision_eyes', name: 'Vision & Screen Eyes', cluster: 'perception', kind: 'faculty', val: 8.5, color: '#00e5ff', desc: 'Desktop screen capture analyzer, webcam perception, and spatial awareness.' },
+      { id: 'comp_control', name: 'Computer Control OS', cluster: 'control', kind: 'faculty', val: 9, color: '#ff5964', desc: 'Native Windows automation, window focus, keyboard/mouse actions, and powershell sandbox.' },
+      { id: 'memory_vault', name: 'Memory & Facts Vault', cluster: 'memory', kind: 'faculty', val: 8, color: '#b58cff', desc: 'Long-term user identity, preferences, relationship facts, and past conversation memory.' },
+      { id: 'telemetry', name: 'Hardware Telemetry', cluster: 'system', kind: 'faculty', val: 6.5, color: '#ffd166', desc: 'Real-time CPU, GPU load, RAM allocation, temperatures, and process supervisor.' },
+      { id: 'telegram_bridge', name: 'Telegram Bot Bridge', cluster: 'remote', kind: 'faculty', val: 7.5, color: '#06d6a0', desc: 'Secure mobile remote link for mobile voice/text commands, alerts, and photo transfers.' },
+
+      // ── Tier 2: Specialized Plugin Hubs ──
+      // SmartThings Orbit (as requested: controls Samsung TV, climate, switches)
+      { id: 'smartthings', name: 'SmartThings Hub', cluster: 'smartthings', kind: 'plugin', val: 8.5, color: '#ff9f1c', desc: 'Connected directly to Ultron Brain. Controls Samsung TV, living room climate, smart lights, and IoT devices.' },
+      // Ultron Mail MCP Orbit
+      { id: 'ultron_mail', name: 'Ultron Mail MCP', cluster: 'mail', kind: 'plugin', val: 7.5, color: '#f72585', desc: 'Autonomous email triage, draft composition, inbox digest, and VIP notifications.' },
+      // Movie Downloader Orbit
+      { id: 'movie_dl', name: 'Movie Downloader', cluster: 'movie_dl', kind: 'plugin', val: 8, color: '#9b5de5', desc: 'Automated torrent searches, magnet link dispatch, and qBittorrent downloads.' },
+      // Google Workspace Orbit
+      { id: 'google_workspace', name: 'Google Workspace', cluster: 'workspace', kind: 'plugin', val: 7, color: '#4ecdc4', desc: 'Google Drive files, Google Maps routes, and local calendar synchronizer.' },
+      // Developer Agent Orbit
+      { id: 'antigravity_agent', name: 'Antigravity Coder', cluster: 'dev', kind: 'plugin', val: 7, color: '#3a86ff', desc: 'Autonomous programming engine, workspace builder, and terminal code executor.' },
+      // Media Player Orbit
+      { id: 'media_player', name: 'Video & Media Player', cluster: 'media', kind: 'plugin', val: 6.5, color: '#ff006e', desc: 'HUD video player, YouTube trailer streamer, and audio sync engine.' },
+      // World News Orbit
+      { id: 'world_news', name: 'World Briefing', cluster: 'news', kind: 'plugin', val: 5.5, color: '#48cae4', desc: 'Daily world news synthesis, RSS telemetry, and morning briefings.' },
+
+      // ── Tier 3: Devices & Subsystem Satellites ──
+      // SmartThings Orbit Satellites:
+      { id: 'samsung_tv', name: 'Samsung Smart TV', cluster: 'smartthings', kind: 'device', val: 5.5, color: '#ffb703', desc: 'Controlled via SmartThings & Ultron Brain: Power, HDMI switch, volume, TV auto-boot.' },
+      { id: 'midea_ac', name: 'Midea Climate Control', cluster: 'smartthings', kind: 'device', val: 5, color: '#ffb703', desc: 'Smart air conditioner: temperature regulation, cooling modes, and fan speed.' },
+      { id: 'smart_lights', name: 'Smart Lights & Switches', cluster: 'smartthings', kind: 'device', val: 4.5, color: '#ffd166', desc: 'Ambient lighting and automated power toggles.' },
+      { id: 'iot_sensors', name: 'IoT Presence Sensors', cluster: 'smartthings', kind: 'device', val: 4, color: '#ffd166', desc: 'Environmental telemetry and presence detectors.' },
+
+      // Ultron Mail Satellites:
+      { id: 'mail_inbox', name: 'Inbox Triage Stream', cluster: 'mail', kind: 'subsystem', val: 4.5, color: '#ff70a6', desc: 'Real-time unread email monitoring and categorization.' },
+      { id: 'mail_drafts', name: 'Draft Generator', cluster: 'mail', kind: 'subsystem', val: 4, color: '#ff70a6', desc: 'AI-assisted reply synthesis and review queue.' },
+
+      // Movie Downloader Satellites:
+      { id: 'qbittorrent', name: 'qBittorrent Engine', cluster: 'movie_dl', kind: 'subsystem', val: 5, color: '#c77dff', desc: 'Download client tracking progress, seeds, and disk completion.' },
+      { id: 'magnet_indexer', name: 'Magnet Indexer', cluster: 'movie_dl', kind: 'subsystem', val: 4.5, color: '#c77dff', desc: 'Torrent aggregator searching movie releases and resolutions.' },
+
+      // Computer Control Satellites:
+      { id: 'win_shell', name: 'Windows Shell Sandbox', cluster: 'control', kind: 'subsystem', val: 4.5, color: '#ff7b84', desc: 'Application launching, PowerShell scripts, and process manager.' },
+      { id: 'screen_pointer', name: 'Screen Pointer & Share', cluster: 'control', kind: 'subsystem', val: 4.5, color: '#ff7b84', desc: 'Visual attention cursor, region bounding boxes, and OCR.' },
+      { id: 'audio_matrix', name: 'Audio Output Matrix', cluster: 'control', kind: 'subsystem', val: 4, color: '#ff7b84', desc: 'Device switching (headphones, TV audio, Trust microphone).' },
+
+      // Memory Vault Satellites:
+      { id: 'user_profile', name: 'User Profile & Identity', cluster: 'memory', kind: 'subsystem', val: 4.5, color: '#d8b4fe', desc: 'Personal preferences, habits, and relationship memories.' },
+      { id: 'projects_memory', name: 'Active Projects Memory', cluster: 'memory', kind: 'subsystem', val: 4, color: '#d8b4fe', desc: 'Active development goals and project contexts.' },
+
+      // Google Workspace Satellites:
+      { id: 'google_drive', name: 'Google Drive Vault', cluster: 'workspace', kind: 'subsystem', val: 4.5, color: '#80ed99', desc: 'Cloud files, document reviews, and storage access.' },
+      { id: 'google_maps', name: 'Google Maps & Stays', cluster: 'workspace', kind: 'subsystem', val: 4, color: '#80ed99', desc: 'Navigation, trip itineraries, and local services.' },
+
+      // ── Tier 4: External Cloud & Service Connections ──
+      { id: 'conn_mail', name: 'Google Mail (Gmail)', cluster: 'connections', kind: 'connection', val: 6.8, color: '#ea4335', desc: 'Google Gmail OAuth2 connection. Real-time inbox monitoring, draft composition, and VIP alerts.' },
+      { id: 'conn_gdrive', name: 'Google Drive Cloud', cluster: 'connections', kind: 'connection', val: 6.8, color: '#4285f4', desc: 'Google Drive REST API link. DPAPI encrypted token for file index, document search, and cloud storage.' },
+      { id: 'conn_youtube', name: 'YouTube Stream Engine', cluster: 'connections', kind: 'connection', val: 6.8, color: '#ff0033', desc: 'YouTube API & Video streamer connection. Resolves video streams, trailers, and audio playback.' },
+      { id: 'conn_smartthings', name: 'SmartThings Cloud API', cluster: 'connections', kind: 'connection', val: 6.8, color: '#00b4d8', desc: 'Samsung SmartThings Cloud Gateway. REST API token link controlling Samsung Smart TV, AC, and lights.' },
+      { id: 'conn_telegram', name: 'Telegram Bot Link', cluster: 'connections', kind: 'connection', val: 6.2, color: '#0088cc', desc: 'Telegram Bot API encrypted bridge. Remote mobile voice/text commands, camera photos, and notifications.' },
+      { id: 'conn_gmaps', name: 'Google Maps API', cluster: 'connections', kind: 'connection', val: 5.8, color: '#34a853', desc: 'Google Maps routing and transit engine. Distance calculations, navigation, and location intelligence.' },
+      { id: 'conn_torrent', name: 'Torrent Swarm / P2P', cluster: 'connections', kind: 'connection', val: 5.8, color: '#9b5de5', desc: 'Distributed P2P torrent swarm and qBittorrent WebUI integration for high-speed background movie downloads.' }
+    ];
+
+    const LINKS = [
+      // ── Core Backbone Links (ULTRON Core connected to everything) ──
+      { source: 'core', target: 'brain', kind: 'core_link', value: 3.5, dist: 80 },
+      { source: 'core', target: 'comp_control', kind: 'core_link', value: 2.5, dist: 120 },
+      { source: 'core', target: 'smartthings', kind: 'core_link', value: 2.8, dist: 130 },
+      { source: 'core', target: 'ultron_mail', kind: 'core_link', value: 2.2, dist: 130 },
+      { source: 'core', target: 'movie_dl', kind: 'core_link', value: 2.2, dist: 130 },
+      { source: 'core', target: 'google_workspace', kind: 'core_link', value: 2.0, dist: 125 },
+      { source: 'core', target: 'memory_vault', kind: 'core_link', value: 2.4, dist: 110 },
+      { source: 'core', target: 'telemetry', kind: 'core_link', value: 2.0, dist: 100 },
+      { source: 'core', target: 'telegram_bridge', kind: 'core_link', value: 2.2, dist: 115 },
+      { source: 'core', target: 'antigravity_agent', kind: 'core_link', value: 2.0, dist: 120 },
+      { source: 'core', target: 'media_player', kind: 'core_link', value: 1.8, dist: 110 },
+      { source: 'core', target: 'world_news', kind: 'core_link', value: 1.6, dist: 110 },
+
+      // ── Cognitive Brain Interconnections ──
+      // Brain controls SmartThings!
+      { source: 'brain', target: 'smartthings', kind: 'neural', value: 2.8, dist: 75 },
+      { source: 'brain', target: 'claude_brain', kind: 'neural', value: 2.0, dist: 50 },
+      { source: 'brain', target: 'voice_dsp', kind: 'neural', value: 2.5, dist: 55 },
+      { source: 'brain', target: 'vision_eyes', kind: 'neural', value: 2.5, dist: 55 },
+      { source: 'brain', target: 'comp_control', kind: 'neural', value: 2.6, dist: 70 },
+      { source: 'brain', target: 'memory_vault', kind: 'neural', value: 2.5, dist: 65 },
+      { source: 'brain', target: 'ultron_mail', kind: 'neural', value: 2.0, dist: 75 },
+      { source: 'brain', target: 'antigravity_agent', kind: 'neural', value: 2.0, dist: 75 },
+
+      // ── SmartThings Orbit (Connected to Brain & Core, controlling TV, AC, etc.) ──
+      { source: 'smartthings', target: 'samsung_tv', kind: 'device_link', value: 2.4, dist: 48 },
+      { source: 'smartthings', target: 'midea_ac', kind: 'device_link', value: 2.2, dist: 46 },
+      { source: 'smartthings', target: 'smart_lights', kind: 'device_link', value: 1.8, dist: 44 },
+      { source: 'smartthings', target: 'iot_sensors', kind: 'device_link', value: 1.6, dist: 42 },
+
+      // ── Movie Downloader Orbit ──
+      { source: 'movie_dl', target: 'qbittorrent', kind: 'plugin_link', value: 2.4, dist: 45 },
+      { source: 'movie_dl', target: 'magnet_indexer', kind: 'plugin_link', value: 2.0, dist: 42 },
+      { source: 'telegram_bridge', target: 'movie_dl', kind: 'remote_link', value: 2.2, dist: 75 },
+
+      // ── Ultron Mail Orbit ──
+      { source: 'ultron_mail', target: 'mail_inbox', kind: 'plugin_link', value: 2.2, dist: 42 },
+      { source: 'ultron_mail', target: 'mail_drafts', kind: 'plugin_link', value: 2.0, dist: 40 },
+
+      // ── Computer Control Orbit ──
+      { source: 'comp_control', target: 'win_shell', kind: 'control_link', value: 2.2, dist: 45 },
+      { source: 'comp_control', target: 'screen_pointer', kind: 'control_link', value: 2.2, dist: 44 },
+      { source: 'comp_control', target: 'audio_matrix', kind: 'control_link', value: 2.0, dist: 42 },
+      { source: 'vision_eyes', target: 'screen_pointer', kind: 'vision_link', value: 2.0, dist: 50 },
+
+      // ── Memory Vault Orbit ──
+      { source: 'memory_vault', target: 'user_profile', kind: 'memory_link', value: 2.2, dist: 42 },
+      { source: 'memory_vault', target: 'projects_memory', kind: 'memory_link', value: 2.0, dist: 40 },
+
+      // ── Google Workspace Orbit ──
+      { source: 'google_workspace', target: 'google_drive', kind: 'workspace_link', value: 2.0, dist: 42 },
+      { source: 'google_workspace', target: 'google_maps', kind: 'workspace_link', value: 2.0, dist: 42 },
+
+      // ── Cross-Functional Links ──
+      { source: 'voice_dsp', target: 'audio_matrix', kind: 'cross_link', value: 1.5, dist: 65 },
+      { source: 'media_player', target: 'samsung_tv', kind: 'cross_link', value: 1.8, dist: 70 },
+
+      // ── External Cloud & Service Connections Links ──
+      { source: 'core', target: 'conn_mail', kind: 'conn_link', value: 2.2, dist: 95 },
+      { source: 'ultron_mail', target: 'conn_mail', kind: 'conn_link', value: 2.5, dist: 45 },
+      { source: 'google_workspace', target: 'conn_mail', kind: 'conn_link', value: 1.8, dist: 55 },
+
+      { source: 'core', target: 'conn_gdrive', kind: 'conn_link', value: 2.2, dist: 95 },
+      { source: 'google_workspace', target: 'conn_gdrive', kind: 'conn_link', value: 2.5, dist: 45 },
+      { source: 'google_drive', target: 'conn_gdrive', kind: 'conn_link', value: 2.0, dist: 40 },
+
+      { source: 'core', target: 'conn_youtube', kind: 'conn_link', value: 2.2, dist: 95 },
+      { source: 'media_player', target: 'conn_youtube', kind: 'conn_link', value: 2.5, dist: 45 },
+
+      { source: 'core', target: 'conn_smartthings', kind: 'conn_link', value: 2.2, dist: 95 },
+      { source: 'smartthings', target: 'conn_smartthings', kind: 'conn_link', value: 2.5, dist: 45 },
+      { source: 'samsung_tv', target: 'conn_smartthings', kind: 'conn_link', value: 2.0, dist: 45 },
+
+      { source: 'core', target: 'conn_telegram', kind: 'conn_link', value: 2.2, dist: 95 },
+      { source: 'telegram_bridge', target: 'conn_telegram', kind: 'conn_link', value: 2.5, dist: 45 },
+
+      { source: 'core', target: 'conn_gmaps', kind: 'conn_link', value: 2.0, dist: 95 },
+      { source: 'google_workspace', target: 'conn_gmaps', kind: 'conn_link', value: 2.2, dist: 45 },
+      { source: 'google_maps', target: 'conn_gmaps', kind: 'conn_link', value: 1.8, dist: 40 },
+
+      { source: 'core', target: 'conn_torrent', kind: 'conn_link', value: 2.0, dist: 95 },
+      { source: 'movie_dl', target: 'conn_torrent', kind: 'conn_link', value: 2.2, dist: 45 },
+      { source: 'qbittorrent', target: 'conn_torrent', kind: 'conn_link', value: 1.8, dist: 40 }
+    ];
+
+    // ── Graph Initialization ─────────────────────────────────────────────────
+    const elem = document.getElementById('graph-container');
+    let isWorking = false;
+    let currentPulseSpeed = 0.004;
+    let particleWidth = 2.2;
+    let activeFilter = 'all';
+
+    let connectionMap = {
+      conn_mail: true,
+      conn_gdrive: true,
+      conn_youtube: true,
+      conn_smartthings: true,
+      conn_telegram: true,
+      conn_gmaps: true,
+      conn_torrent: true
+    };
+
+    const Graph = ForceGraph3D()(elem)
+      .backgroundColor('rgba(0,0,0,0)')
+      .showNavInfo(false)
+      .enableNavigationControls(true)
+      .enableNodeDrag(true)
+      .nodeId('id')
+      .nodeVal(n => n.val)
+      .nodeColor(n => n.color)
+      .nodeResolution(22)
+      .nodeOpacity(0.94)
+      .nodeRelSize(3.6)
+      .linkColor(l => {
+        if (l.kind === 'core_link') return 'rgba(0, 240, 255, 0.42)';
+        if (l.kind === 'neural') return 'rgba(127, 231, 255, 0.45)';
+        if (l.kind === 'device_link') return 'rgba(255, 179, 71, 0.55)';
+        if (l.kind === 'plugin_link') return 'rgba(181, 140, 255, 0.45)';
+        if (l.kind === 'control_link') return 'rgba(255, 107, 107, 0.45)';
+        if (l.kind === 'conn_link') return 'rgba(0, 255, 157, 0.48)';
+        return 'rgba(100, 160, 255, 0.3)';
+      })
+      .linkWidth(l => {
+        if (l.kind === 'core_link') return 1.8;
+        if (l.kind === 'neural') return 1.6;
+        if (l.kind === 'conn_link') return 1.6;
+        if (l.kind === 'device_link') return 1.4;
+        return 0.9;
+      })
+      // Dynamic directional particles (the "male kuglice" moving between connected lines)
+      .linkDirectionalParticles(l => {
+        if (isWorking) {
+          if (l.kind === 'core_link' || l.kind === 'neural' || l.kind === 'device_link' || l.kind === 'conn_link') return 6;
+          return 4;
+        }
+        return (l.kind === 'core_link' || l.kind === 'neural' || l.kind === 'conn_link') ? 2 : 1;
+      })
+      .linkDirectionalParticleSpeed(l => currentPulseSpeed)
+      .linkDirectionalParticleWidth(l => particleWidth)
+      .linkDirectionalParticleColor(l => {
+        if (isWorking) {
+          if (l.kind === 'conn_link') return '#00ffc8';
+          if (l.kind === 'device_link') return '#ffb703';
+          if (l.kind === 'neural') return '#7fe7ff';
+          if (l.kind === 'control_link') return '#ff6b6b';
+          return '#00f0ff';
+        }
+        if (l.kind === 'conn_link') return '#00ff9d';
+        return l.kind === 'device_link' ? '#ff9f1c' : '#7fe7ff';
+      })
+      .linkCurvature(l => l.kind === 'cross_link' ? 0.28 : (l.kind === 'device_link' ? 0.12 : (l.kind === 'conn_link' ? 0.08 : 0)))
+      .graphData({ nodes: NODES, links: LINKS });
+
+    // Set custom spring forces for natural hierarchical spacing
+    try {
+      Graph.d3Force('link').distance(l => (l.dist ? l.dist * 1.35 : 75));
+      Graph.d3Force('charge').strength(-240);
+      Graph.d3Force('center').strength(0.06);
+    } catch(e) {}
+
+    // Node tooltip interaction
+    const nodeCard = document.getElementById('node-card');
+    const cardTitle = document.getElementById('card-title');
+    const cardType = document.getElementById('card-type');
+    const cardDesc = document.getElementById('card-desc');
+
+    Graph.onNodeHover(node => {
+      if (node) {
+        elem.style.cursor = 'pointer';
+        cardTitle.textContent = (node.id === 'core' ? assistantName.toUpperCase() + ' ' : '') + node.name;
+        if (node.kind === 'connection') {
+          const isConn = connectionMap[node.id] !== false;
+          cardType.innerHTML = `<span style="color:${isConn ? '#00ff9d' : '#ffb347'}">● ${isConn ? 'ONLINE // CONNECTED' : 'OFFLINE // STANDBY'}</span> · EXTERNAL CLOUD LINK`;
+        } else {
+          cardType.textContent = `${node.kind.toUpperCase()} // CLUSTER: ${node.cluster.toUpperCase()}`;
+          cardType.style.color = node.color;
+        }
+        cardDesc.textContent = node.desc;
+        nodeCard.style.display = 'block';
+      } else {
+        elem.style.cursor = null;
+        nodeCard.style.display = 'none';
+      }
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (nodeCard.style.display === 'block') {
+        nodeCard.style.left = e.clientX + 'px';
+        nodeCard.style.top = e.clientY + 'px';
+      }
+    });
+
+    Graph.onNodeClick(node => {
+      flyToNode(node);
+      triggerPulse(2600);
+    });
+
+    function flyToNode(node) {
+      if (!node) return;
+      const distance = 95;
+      const distRatio = 1 + distance / Math.max(1, Math.hypot(node.x, node.y, node.z));
+      Graph.cameraPosition(
+        { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio },
+        node,
+        1300
+      );
+    }
+
+    // ── 3D Auto-Orbit Camera Motion ──────────────────────────────────────────
+    let angle = 0;
+    let cameraDistance = 440;
+    let userInteracting = false;
+    let autoOrbitActive = true;
+
+    elem.addEventListener('mousedown', () => { userInteracting = true; });
+    window.addEventListener('mouseup', () => {
+      setTimeout(() => { userInteracting = false; }, 2200);
+    });
+
+    setInterval(() => {
+      if (autoOrbitActive && !userInteracting) {
+        angle += isWorking ? 0.0035 : 0.0014;
+        const x = cameraDistance * Math.sin(angle);
+        const z = cameraDistance * Math.cos(angle);
+        const y = 65 * Math.sin(angle * 0.45);
+        Graph.cameraPosition({ x, y, z }, { x: 0, y: 0, z: 0 });
+      }
+    }, 28);
+
+    // Initial camera zoom-in
+    setTimeout(() => {
+      Graph.cameraPosition({ x: 0, y: 50, z: cameraDistance }, { x: 0, y: 0, z: 0 }, 1100);
+    }, 200);
+
+    // ── Overlay Canvas (Orbital Rings, Labels & Glowing Energy Waves) ────────
+    const overlayCanvas = document.getElementById('overlay-canvas');
+    const octx = overlayCanvas.getContext('2d');
+    let chargingRings = [];
+
+    function resizeOverlay(w, h) {
+      overlayCanvas.width = w || elem.clientWidth || window.innerWidth;
+      overlayCanvas.height = h || elem.clientHeight || window.innerHeight;
+    }
+    window.resizeOverlayCanvas = resizeOverlay;
+    window.addEventListener('resize', () => resizeOverlay());
+    resizeOverlay();
+
+    // ── Dynamic Dimension & WebGL Canvas Resizing ─────────────────────────────
+    function updateDimensions() {
+      const w = elem.clientWidth || window.innerWidth;
+      const h = elem.clientHeight || window.innerHeight;
+      if (w > 20 && h > 20) {
+        if (typeof Graph !== 'undefined' && Graph.width && Graph.height) {
+          Graph.width(w).height(h);
+          if (Graph.renderer) {
+            try {
+              Graph.renderer().setSize(w, h);
+              Graph.renderer().setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+              if (Graph.camera()) {
+                Graph.camera().aspect = w / h;
+                Graph.camera().updateProjectionMatrix();
+              }
+            } catch(e) {}
+          }
+        }
+        if (window.resizeSpaceCanvas) window.resizeSpaceCanvas(w, h);
+        if (window.resizeOverlayCanvas) window.resizeOverlayCanvas(w, h);
+      }
+    }
+
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(() => {
+        updateDimensions();
+      });
+      ro.observe(elem);
+      ro.observe(document.body);
+    }
+    window.addEventListener('resize', updateDimensions);
+
+    // Initial polling check to catch initial paint
+    let initDimTimer = setInterval(() => {
+      if (elem.clientWidth > 20 && elem.clientHeight > 20) {
+        updateDimensions();
+        clearInterval(initDimTimer);
+      }
+    }, 120);
+    setTimeout(() => { clearInterval(initDimTimer); }, 4000);
+
+    window.refreshDimensions = function() {
+      updateDimensions();
+    };
+
+    // Pulse wave generator when charging/working
+    setInterval(() => {
+      if (isWorking && NODES.length > 0) {
+        // Emit expanding energy pulse from Core, Brain, and random active device
+        const activeSources = [
+          NODES[0], // Core
+          NODES[1], // Brain
+          NODES.find(n => n.id === 'smartthings'),
+          NODES.find(n => n.id === 'samsung_tv'),
+          NODES[Math.floor(Math.random() * NODES.length)]
+        ].filter(Boolean);
+
+        for (let sn of activeSources) {
+          if (sn && sn.x !== undefined) {
+            chargingRings.push({
+              node: sn,
+              r: 8,
+              maxR: 36 + Math.random() * 24,
+              alpha: 0.88,
+              color: sn.color
+            });
+          }
+        }
+      }
+    }, 240);
+
+    function renderOverlay() {
+      octx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+      const graphNodes = Graph.graphData().nodes;
+
+      // 1. Draw glowing orbital guide rings around Hub centers
+      const hubIds = ['core', 'smartthings', 'brain', 'movie_dl', 'comp_control', 'ultron_mail'];
+      for (let hid of hubIds) {
+        const hubNode = graphNodes.find(n => n.id === hid);
+        if (hubNode && hubNode.x !== undefined && typeof Graph.graph2ScreenCoords === 'function') {
+          const pt = Graph.graph2ScreenCoords(hubNode.x, hubNode.y, hubNode.z);
+          if (pt && pt.x >= -100 && pt.x <= overlayCanvas.width + 100 && pt.y >= -100 && pt.y <= overlayCanvas.height + 100) {
+            octx.save();
+            octx.beginPath();
+            const ringRadius = hid === 'core' ? 90 : (hid === 'smartthings' ? 45 : 38);
+            octx.arc(pt.x, pt.y, ringRadius, 0, Math.PI * 2);
+            octx.strokeStyle = hubNode.color;
+            octx.globalAlpha = 0.08;
+            octx.lineWidth = 1;
+            octx.setLineDash([4, 6]);
+            octx.stroke();
+            octx.restore();
+          }
+        }
+      }
+
+      // 2. Draw charging energy pulse rings around nodes
+      for (let i = chargingRings.length - 1; i >= 0; i--) {
+        const ring = chargingRings[i];
+        if (ring.node.x !== undefined && typeof Graph.graph2ScreenCoords === 'function') {
+          const pt = Graph.graph2ScreenCoords(ring.node.x, ring.node.y, ring.node.z);
+          if (pt && pt.x >= 0 && pt.x <= overlayCanvas.width && pt.y >= 0 && pt.y <= overlayCanvas.height) {
+            octx.save();
+            octx.beginPath();
+            octx.arc(pt.x, pt.y, ring.r, 0, Math.PI * 2);
+            octx.strokeStyle = ring.color;
+            octx.globalAlpha = ring.alpha;
+            octx.lineWidth = 1.6;
+            octx.shadowColor = ring.color;
+            octx.shadowBlur = 10;
+            octx.stroke();
+            octx.restore();
+          }
+        }
+        ring.r += 1.3;
+        ring.alpha -= 0.024;
+        if (ring.alpha <= 0 || ring.r >= ring.maxR) {
+          chargingRings.splice(i, 1);
+        }
+      }
+
+      // 3. Draw sleek futuristic 2D labels floating above nodes
+      if (typeof Graph.graph2ScreenCoords === 'function') {
+        octx.font = '600 10.5px Consolas, monospace';
+        octx.textAlign = 'center';
+        octx.textBaseline = 'bottom';
+
+        for (let node of graphNodes) {
+          if (node.x === undefined) continue;
+          
+          // Filter visibility if activeFilter is set
+          if (activeFilter !== 'all') {
+            if (activeFilter === 'connections' && node.cluster !== 'connections' && node.id !== 'core') continue;
+            if (activeFilter === 'smartthings' && node.cluster !== 'smartthings' && node.id !== 'core' && node.id !== 'brain') continue;
+            if (activeFilter === 'brain' && node.cluster !== 'brain' && node.id !== 'core') continue;
+            if (activeFilter === 'plugins' && node.kind !== 'plugin' && node.id !== 'core' && node.id !== 'brain') continue;
+            if (activeFilter === 'control' && node.cluster !== 'control' && node.id !== 'core' && node.id !== 'brain') continue;
+            if (activeFilter === 'movie_dl' && node.cluster !== 'movie_dl' && node.id !== 'core') continue;
+          }
+
+          const pos = Graph.graph2ScreenCoords(node.x, node.y, node.z);
+          if (pos && pos.x >= -60 && pos.x <= overlayCanvas.width + 60 && pos.y >= -60 && pos.y <= overlayCanvas.height + 60) {
+            const label = node.id === 'core' ? `${assistantName.toUpperCase()} CORE` : node.name;
+            const offsetY = node.val * 1.4 + 7;
+            
+            // If connection node, draw glowing connection status tag
+            if (node.kind === 'connection') {
+              const isConn = connectionMap[node.id] !== false;
+              const statusStr = isConn ? '● CONNECTED' : '○ STANDBY';
+              const badgeColor = isConn ? '#00ff9d' : '#ffb347';
+              octx.save();
+              octx.font = '700 8px Consolas, monospace';
+              octx.fillStyle = badgeColor;
+              octx.shadowColor = badgeColor;
+              octx.shadowBlur = 6;
+              octx.fillText(statusStr, pos.x, pos.y - offsetY - 12);
+              octx.restore();
+            }
+
+            octx.save();
+            octx.font = '600 10.5px Consolas, monospace';
+            octx.shadowColor = node.color;
+            octx.shadowBlur = 8;
+            octx.fillStyle = node.id === 'core' ? '#ffffff' : (isWorking ? '#ffffff' : '#b2e2ff');
+            octx.globalAlpha = (node.kind === 'device' || node.kind === 'connection') ? 0.95 : (isWorking ? 0.92 : 0.82);
+            octx.fillText(label, pos.x, pos.y - offsetY);
+            octx.restore();
+          }
+        }
+      }
+
+      requestAnimationFrame(renderOverlay);
+    }
+    requestAnimationFrame(renderOverlay);
+
+    // ── Dynamic State Switching (Idle vs Working) ────────────────────────────
+    const statusBadge = document.getElementById('status-badge');
+    const statusText = document.getElementById('status-text');
+    const meterBar = document.getElementById('meter-bar');
+    const fluxVal = document.getElementById('flux-val');
+
+    function updateStateUI(state) {
+      state = (state || 'IDLE').toUpperCase();
+      statusBadge.className = 'status-badge';
+
+      if (['THINKING', 'PROCESSING', 'WORKING', 'TOOL', 'SEARCHING'].includes(state)) {
+        isWorking = true;
+        currentPulseSpeed = 0.015;
+        particleWidth = 3.6;
+        statusBadge.classList.add('working');
+        statusText.textContent = `ACTIVE // ${state}`;
+        meterBar.style.width = '95%';
+        meterBar.style.background = 'linear-gradient(90deg, #ffb347, #ff6b6b)';
+        meterBar.style.boxShadow = '0 0 14px #ffb347';
+        fluxVal.textContent = 'HIGH (CHARGING)';
+      } else if (state === 'SPEAKING') {
+        isWorking = true;
+        currentPulseSpeed = 0.016;
+        particleWidth = 3.8;
+        statusBadge.classList.add('speaking');
+        statusText.textContent = 'TRANSMITTING // SPEECH';
+        meterBar.style.width = '100%';
+        meterBar.style.background = 'linear-gradient(90deg, #00ff9d, #00f0ff)';
+        meterBar.style.boxShadow = '0 0 14px #00ff9d';
+        fluxVal.textContent = 'MAX (STREAMING)';
+      } else if (state === 'LISTENING') {
+        isWorking = false;
+        currentPulseSpeed = 0.006;
+        particleWidth = 2.4;
+        statusText.textContent = 'LISTENING // AUDIO RECEPTIVE';
+        meterBar.style.width = '45%';
+        meterBar.style.background = 'linear-gradient(90deg, #00f0ff, #5b8cff)';
+        meterBar.style.boxShadow = '0 0 8px #00f0ff';
+        fluxVal.textContent = 'NOMINAL';
+      } else {
+        isWorking = false;
+        currentPulseSpeed = 0.0035;
+        particleWidth = 2.2;
+        statusText.textContent = 'MONITORING // STANDBY';
+        meterBar.style.width = '20%';
+        meterBar.style.background = 'linear-gradient(90deg, #00f0ff, #5b8cff)';
+        meterBar.style.boxShadow = '0 0 6px #00f0ff';
+        fluxVal.textContent = 'IDLE';
+      }
+
+      // Re-trigger particle flows in graph
+      Graph.linkDirectionalParticles(Graph.linkDirectionalParticles())
+           .linkDirectionalParticleSpeed(currentPulseSpeed)
+           .linkDirectionalParticleWidth(particleWidth);
+    }
+
+    let pulseTimer = null;
+    function triggerPulse(durationMs = 3800) {
+      const prevWorking = isWorking;
+      isWorking = true;
+      currentPulseSpeed = 0.016;
+      particleWidth = 3.8;
+      meterBar.style.width = '94%';
+      fluxVal.textContent = 'CHARGING SURGE';
+      Graph.linkDirectionalParticles(Graph.linkDirectionalParticles())
+           .linkDirectionalParticleSpeed(currentPulseSpeed)
+           .linkDirectionalParticleWidth(particleWidth);
+
+      if (pulseTimer) clearTimeout(pulseTimer);
+      pulseTimer = setTimeout(() => {
+        if (!prevWorking) {
+          updateStateUI('IDLE');
+        }
+      }, durationMs);
+    }
+
+    // ── External Window API (called by Python / Ultron) ──────────────────────
+    window.setOrbitState = function(state) {
+      updateStateUI(state);
+    };
+
+    window.triggerEnergyPulse = function() {
+      triggerPulse(4000);
+    };
+
+    window.setAssistantName = function(name) {
+      if (!name) return;
+      assistantName = name;
+      document.getElementById('orbit-title').innerHTML = `<span>◈</span> ${name.toUpperCase()} ORBIT`;
+    };
+
+    window.setConnections = function(connStatusMap) {
+      if (connStatusMap && typeof connStatusMap === 'object') {
+        Object.assign(connectionMap, connStatusMap);
+      }
+    };
+
+    window.focusSubsystem = function(subsystemId) {
+      if (subsystemId === 'connections') {
+        const connNode = NODES.find(n => n.id === 'conn_mail') || NODES.find(n => n.kind === 'connection');
+        if (connNode) flyToNode(connNode);
+        triggerPulse(3500);
+        return;
+      }
+      const target = NODES.find(n => n.id === subsystemId || n.cluster === subsystemId);
+      if (target) {
+        flyToNode(target);
+        triggerPulse(3500);
+      }
+    };
+
+    window.resetCamera = function() {
+      angle = 0;
+      activeFilter = 'all';
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.target === 'all'));
+      Graph.cameraPosition({ x: 0, y: 45, z: cameraDistance }, { x: 0, y: 0, z: 0 }, 1000);
+    };
+
+    // ── Filter Buttons ───────────────────────────────────────────────────────
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.target;
+        
+        if (activeFilter === 'all') {
+          window.resetCamera();
+        } else {
+          window.focusSubsystem(activeFilter);
+        }
+      });
+    });
+
+    // ── Header Buttons ───────────────────────────────────────────────────────
+    document.getElementById('btn-pulse').addEventListener('click', () => {
+      triggerPulse(4000);
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      window.resetCamera();
+    });
+
+    let isExpanded = false;
+    const btnExpand = document.getElementById('btn-expand');
+    if (btnExpand) {
+      btnExpand.addEventListener('click', () => {
+        isExpanded = !isExpanded;
+        btnExpand.textContent = isExpanded ? '❐ RESTORE' : '⛶ EXPAND';
+        document.title = 'JARVIS_ORBIT_TOGGLE_EXPAND';
+        setTimeout(() => {
+          document.title = 'JARVIS Orbital Matrix';
+          if (window.refreshDimensions) window.refreshDimensions();
+        }, 150);
+      });
+    }
+
+    document.getElementById('btn-close').addEventListener('click', () => {
+      document.title = 'JARVIS_ORBIT_CLOSE';
+    });
+  </script>
+</body>
+</html>

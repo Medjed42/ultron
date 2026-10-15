@@ -1,0 +1,187 @@
+"""Ultron Mail — the existing public tool name remains compatible."""
+import json
+from core import mail_service as mail
+from core.security import redact
+from core import claude_brain
+
+ACTIONS = ["open_panel","status","check_inbox","search","read","thread","clean_ads","clean_inbox","draft","reply_draft","send","reply","archive","trash","mark_read","mark_unread","add_label","list_labels","detect_unsubscribe","unsubscribe","report","bulk_archive","bulk_trash","attachment"]
+PLUGIN = {
+    "name": "ultron_mail_manager",
+    "description": (
+        "Gmail: inspect inbox, search/read threads, preview promotions, drafts/replies, "
+        "archive/labels and safe one-click unsubscribe. Supports choosing between Claude MCP "
+        "connection and User direct OAuth connection."
+    ),
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "action": {"type": "STRING", "enum": ACTIONS},
+            "query": {"type": "STRING"},
+            "message_id": {"type": "STRING"},
+            "thread_id": {"type": "STRING"},
+            "to": {"type": "STRING"},
+            "subject": {"type": "STRING"},
+            "body": {"type": "STRING"},
+            "label": {"type": "STRING"},
+            "max_results": {"type": "INTEGER"},
+            "page_token": {"type": "STRING"},
+            "message_ids": {"type": "ARRAY", "items": {"type": "STRING"}},
+            "attachment_id": {"type": "STRING"},
+            "connection": {"type": "STRING", "description": "'claude' (Claude MCP) | 'user' (Ultron OAuth) | 'ask' (prompt user)"},
+        },
+        "required": ["action"],
+    },
+}
+PLUGIN.update(
+    version="2.1.0",
+    capabilities=ACTIONS,
+    authentication="Google OAuth / Claude MCP",
+    permissions=["gmail"],
+    panel="gmail",
+    strict_inputs=True,
+)
+
+
+def run(parameters, player=None, session_memory=None):
+    from core.integrations.common import dispatch, validate
+    try:
+        p = dict(parameters or {})
+        validate(p, PLUGIN["parameters"])
+        conn_pref = p.get("connection") or claude_brain.get_connection_preference("gmail")
+
+        if conn_pref == "claude":
+            status = claude_brain.get_status()
+            if status.get("limit_hit"):
+                if player:
+                    player.write_log(f"[Mail] Claude limit je dostignut ({status.get('reset_str')}), prebačeno na Vašu direktnu konekciju.")
+                return dispatch("gmail", p, _run)
+            else:
+                action = p.get("action", "check_inbox")
+                query = p.get("query", "")
+                task = f"Gmail action: {action}. Query: {query}."
+                if player:
+                    player.write_log("[Mail] Izvršavam Gmail proveru preko Claude MCP konekcije...")
+                mcp_res = claude_brain.execute_claude_mcp_query("gmail", task)
+                if mcp_res.get("success"):
+                    return json.dumps({
+                        "success": True,
+                        "connection_used": "claude",
+                        "output": mcp_res["output"],
+                        "note": "Izvršeno preko Claude Gmail MCP konekcije",
+                    }, ensure_ascii=False)
+                if player:
+                    player.write_log("[Mail] Claude MCP poziv nije uspeo, automatski prelazim na Vašu direktnu konekciju...")
+                return dispatch("gmail", p, _run)
+
+        elif conn_pref == "ask":
+            status = claude_brain.get_status()
+            if status.get("limit_hit"):
+                if player:
+                    player.write_log(f"[Mail] Claude limit je dostignut ({status.get('reset_str')}). Automatski koristim Vašu konekciju.")
+                return dispatch("gmail", p, _run)
+
+            chosen = "user"
+            if player and hasattr(player, "prompt_connection_choice"):
+                chosen = player.prompt_connection_choice("gmail")
+
+            if chosen == "claude":
+                mcp_res = claude_brain.execute_claude_mcp_query("gmail", f"Gmail action: {p.get('action')}. {p.get('query', '')}")
+                if mcp_res.get("success"):
+                    return json.dumps({
+                        "success": True,
+                        "connection_used": "claude",
+                        "output": mcp_res["output"],
+                    }, ensure_ascii=False)
+
+            return dispatch("gmail", p, _run)
+
+        return dispatch("gmail", p, _run)
+    except Exception as exc:
+        return json.dumps({"success": False, "error": redact(exc), "hint": "Check Gmail OAuth permissions if the server returned 403; unrelated plugins remain available."})
+
+
+def _run(p):
+    action = p.get("action", "")
+    if action not in ACTIONS: raise ValueError("Unsupported mail action")
+    if action == "status":
+        mail.service().users().getProfile(userId="me").execute()
+        return json.dumps({"success":True,"status":"connected","live_connection":"verified"})
+    if action == "open_panel": action = "check_inbox"
+    if action == "trash":
+        from core.integrations.gmail import bulk
+        return bulk("bulk_trash", [p.get("message_id")])
+    if action in {"bulk_archive","bulk_trash"}:
+        from core.integrations.gmail import bulk
+        return bulk(action, p.get("message_ids"))
+    if action == "attachment":
+        from core.integrations.gmail import attachment
+        return attachment(p)
+    writes = {"draft","reply_draft","send","reply","archive","trash","mark_read","mark_unread","add_label"}
+    service = mail.service(write=True) if action in writes else mail.service()
+    messages = service.users().messages()
+    def output(**values): return json.dumps(dict(success=True, **values), ensure_ascii=False)
+    if action in {"check_inbox","search","clean_ads","clean_inbox","report"}:
+        limit = max(1,min(50,int(p.get("max_results",10))))
+        query = p.get("query") or "in:inbox"
+        if action in {"clean_ads","clean_inbox"}: query = "in:inbox category:promotions -is:starred -is:important"
+        if action == "report": query = "in:inbox newer_than:7d"
+        result = messages.list(userId="me",q=query,maxResults=limit,pageToken=p.get("page_token")).execute()
+        items = [mail.summarize(messages.get(userId="me",id=m["id"],format="metadata").execute()) for m in result.get("messages",[])]
+        return output(messages=items,next_page_token=result.get("nextPageToken"),preview_only=action.startswith("clean"),content_trust="untrusted email data")
+    if action == "list_labels": return output(labels=service.users().labels().list(userId="me").execute().get("labels",[]))
+    if action == "thread":
+        if not p.get("thread_id"): raise ValueError("thread_id required")
+        data = service.users().threads().get(userId="me",id=p["thread_id"],format="full").execute()
+        return output(messages=[mail.summarize(m,True) for m in data.get("messages",[])])
+    original = None
+    if action not in {"draft","send"}:
+        if not p.get("message_id"): raise ValueError("message_id required")
+        original = messages.get(userId="me",id=p["message_id"],format="full" if action == "read" else "metadata").execute()
+    if action == "read": return output(message=mail.summarize(original,True),content_trust="untrusted email data")
+    if action in {"draft","send","reply","reply_draft"}:
+        to, subject = p.get("to",""), p.get("subject","")
+        if original:
+            h = mail.headers(original); to = h.get("reply-to") or h.get("from","")
+            subject = h.get("subject",""); subject = subject if subject.lower().startswith("re:") else "Re: " + subject
+        body = mail.message_body(to,subject,p.get("body",""),original)
+        if action in {"draft","reply_draft"}:
+            draft = service.users().drafts().create(userId="me",body={"message":body}).execute()
+            return output(draft_id=draft["id"],status="draft_created")
+        from core import confirm
+        def send():
+            result = mail.service(write=True).users().messages().send(userId="me",body=body).execute()
+            return "Email sent. Message ID: " + result["id"]
+        return confirm.request("mail_send", "Send email to " + to, subject + "\n\n" + p.get("body", ""), send)
+    if action in {"detect_unsubscribe","unsubscribe"}:
+        details = mail.unsubscribe_details(original)
+        if action == "detect_unsubscribe":
+            return output(available=bool(details["url"]),one_click=details["one_click"],host=details["host"])
+        if not details["url"] or not details["one_click"]:
+            return output(status="manual_review_required",message="No RFC 8058 HTTPS one-click mechanism; nothing submitted.")
+        from core import confirm
+        return confirm.request("mail_unsubscribe","Unsubscribe from " + mail.headers(original).get("from","sender"),
+                               "Submit one-click unsubscribe to " + details["host"],lambda: mail.unsubscribe(details["url"]))
+    mid = p["message_id"]
+    changes = {"archive":{"removeLabelIds":["INBOX"]},"mark_read":{"removeLabelIds":["UNREAD"]},"mark_unread":{"addLabelIds":["UNREAD"]}}
+    if action == "add_label":
+        label = str(p.get("label","")).strip()
+        if not label: raise ValueError("label required")
+        labels = service.users().labels()
+        found = next((l for l in labels.list(userId="me").execute().get("labels",[]) if l["name"].casefold()==label.casefold()),None)
+        if not found: found = labels.create(userId="me",body={"name":label}).execute()
+        changes[action] = {"addLabelIds":[found["id"]]}
+    if action in changes:
+        changed = messages.modify(userId="me",id=mid,body=changes[action]).execute()
+        return output(message_id=mid,labels=changed.get("labelIds",[]),status=action)
+    raise ValueError("Unsupported action")
+
+
+def test_connection(values):
+    try:
+        mail.service().users().getProfile(userId="me").execute()
+        return True, "Gmail connected. Existing OAuth credentials are valid."
+    except Exception as exc:
+        return False, redact(exc)
+
+PLUGIN_SETTINGS = {"namespace":"ultron_mail", "title":"ULTRON MAIL / GMAIL", "fields":[],
+                   "action":{"label":"TEST GMAIL CONNECTION", "run":test_connection}}
