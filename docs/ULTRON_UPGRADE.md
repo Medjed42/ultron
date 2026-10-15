@@ -1,5 +1,8 @@
 # Ultron upgrade — 8 October 2026
 
+> **Made by Pedja** | GitHub: [https://github.com/Medjed42/ultron](https://github.com/Medjed42/ultron)
+
+
 The assistant is now named **Ultron**. Its existing Gemini Live connection, model fallback ladder, credentials and voice configuration remain in place. Startup connected successfully using `gemini-3.1-flash-live-preview`.
 
 ## Start and use

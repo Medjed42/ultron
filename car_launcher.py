@@ -1,5 +1,6 @@
 """
 car_launcher.py — ULTRON's tray auto-launcher.
+Made by Pedja — GitHub: https://github.com/Medjed42/ultron
 
 Sits in the system tray and starts ULTRON when you call for it. Two activation
 methods, chosen in the tray menu (Activation mode) and saved immediately:
@@ -481,6 +482,9 @@ class CarLauncherApp:
         self.test_action = self.menu.addAction("Test microphone (5 s)")
         self.test_action.triggered.connect(self.test_microphone)
         self.menu.addSeparator()
+        self.credits_action = self.menu.addAction("Made by Pedja (GitHub)")
+        self.credits_action.triggered.connect(lambda: subprocess.Popen(["cmd", "/c", "start", "https://github.com/Medjed42/ultron"]))
+        self.menu.addSeparator()
         self.quit_action = self.menu.addAction("Quit Auto-Launcher")
         self.quit_action.triggered.connect(self.quit_app)
         self.tray_icon.setContextMenu(self.menu)
@@ -614,7 +618,7 @@ class CarLauncherApp:
         self.status_text = text
         prefix = {"listening": "●", "paused": "‖", "error": "⚠", "warning": "⚠"}.get(state, "•")
         self.status_action.setText(f"{prefix}  {text}"[:120])
-        self.tray_icon.setToolTip(f"ULTRON Auto-Launcher\n{text}"[:127])
+        self.tray_icon.setToolTip(f"ULTRON 2.0 — Made by Pedja\n{text}"[:127])
         if state in ("error", "warning"):
             self._show_message("ULTRON Auto-Launcher", text)
 

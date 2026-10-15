@@ -1,3 +1,7 @@
+"""
+Ultron Telegram Remote Bridge
+Made by Pedja — https://github.com/Medjed42/ultron
+"""
 import telebot
 import os
 import subprocess
@@ -55,7 +59,7 @@ def authorized(message):
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     if not authorized(message): return
-    bot.reply_to(message, "✅ Sistem je direktno priključen na Ultrona! \nSve što napišeš ili izgovoriš biće prosleđeno direktno u glavni program na tvom računaru.")
+    bot.reply_to(message, "✅ Sistem je direktno priključen na Ultrona! 🚀\nMade by Pedja (https://github.com/Medjed42/ultron)\n \nSve što napišeš ili izgovoriš biće prosleđeno direktno u glavni program na tvom računaru.")
 
 def send_to_car(text):
     ports_to_try = [8000, 8001]

@@ -1,4 +1,6 @@
-"""Launch Ultron and its existing paired Telegram bridge without console windows."""
+"""Launch Ultron and its existing paired Telegram bridge without console windows.
+Ultron 2.0 — Made by Pedja: https://github.com/Medjed42/ultron
+"""
 import os
 from pathlib import Path
 import subprocess

@@ -49,7 +49,7 @@
     const sideStatus = el("div", { class: "side-status", id: "sideStatus", role: "status", "aria-live": "polite" });
     const sidebar = el("aside", { class: "sidebar", id: "sidebar", "aria-label": "Workspace navigation" },
       el("div", { class: "brand" }, el("div", { class: "brand-orb", "aria-hidden": "true" }, el("span")),
-        el("div", { class: "brand-t" }, el("div", { class: "brand-n", text: "ULTRON" }), el("div", { class: "brand-s", text: "AI Workspace" })),
+        el("div", { class: "brand-t" }, el("div", { class: "brand-n", text: "ULTRON" }), el("div", { class: "brand-s", text: "AI Workspace · Made by Pedja" })),
         button("Collapse sidebar", { icon: "chevLeft", iconOnly: true, kind: "ghost", small: true, class: "collapse-btn", onClick: toggleSidebar })),
       nav, shortcuts, recents, sideStatus);
 
@@ -646,7 +646,11 @@
     const cur = el("select", { class: "inp", onchange: (e) => setS({ currency: e.target.value }) }, ["EUR", "RSD", "USD", "GBP", "CHF"].map((c) => el("option", { value: c, text: c, selected: st.currency === c })));
     const home = el("input", { class: "inp", type: "text", maxlength: "200", value: st.home_origin || "", placeholder: "e.g. Niš, or a street address" });
     home.addEventListener("change", () => setS({ home_origin: home.value.trim() }));
-    body.append(section("Answers", [field("Reply language", lang)]),
+    body.append(section("About", [
+        el("div", { class: "field row-f" }, el("span", { class: "field-l", text: "Creator" }), el("span", { class: "field-val", text: "Pedja" })),
+        el("div", { class: "field row-f" }, el("span", { class: "field-l", text: "GitHub Repository" }), el("a", { href: "https://github.com/Medjed42/ultron", target: "_blank", rel: "noopener", text: "https://github.com/Medjed42/ultron" }))
+      ]),
+      section("Answers", [field("Reply language", lang)]),
       section("Travel defaults", [field("Default guests", guests, "Used when a request doesn't say how many people; always shown as an assumption."),
         field("Currency for prices", cur, "Converted at the National Bank of Serbia middle rate."),
         field("Default route start", home, "Used for “Koliko ima do …?” when no origin is given. Leave empty to be asked. Stored locally.")]),

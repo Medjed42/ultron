@@ -6,8 +6,10 @@
 
 # Ultron 2.0
 
+> **Made by Pedja** | GitHub: [https://github.com/Medjed42/ultron](https://github.com/Medjed42/ultron)
 
 The October 2026 upgrade adds the native Ultron orb, existing-Chrome controls, repaired plugins, Gmail tools and Gemini-powered research. Start with the **Ultron** desktop shortcut or `start_ultron.bat`. See [the upgrade guide and source-security review](docs/ULTRON_UPGRADE.md) for features, validation and limitations.
+
 ### The Ultimate Cross-Platform Personal AI Assistant
 
 A real-time voice AI that can hear, see, speak, and control your computer — on any OS. Supports Windows, macOS, and Linux. Built on the Gemini Live API for native audio streaming, delivering zero subscriptions and total digital autonomy.
@@ -378,9 +380,8 @@ Licensed under **[Creative Commons BY-NC 4.0](https://creativecommons.org/licens
 
 ## Credits
 
-Made By Pedja
-
-**Project:** Ultron 2.0 work in progress
-
+- **Creator & Lead Developer:** Pedja ([@Medjed42](https://github.com/Medjed42))
+- **Official GitHub Repository:** [https://github.com/Medjed42/ultron](https://github.com/Medjed42/ultron)
+- **Project:** Ultron 2.0
 
 Third-party component notices are listed in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES/README.md).

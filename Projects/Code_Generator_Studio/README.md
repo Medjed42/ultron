@@ -1,5 +1,8 @@
 # Ultron Code Generation Studio
 
+> **Made by Pedja** | GitHub: [https://github.com/Medjed42/ultron](https://github.com/Medjed42/ultron)
+
+
 Futuristička razvojna platforma za generisanje koda, sandbox izvršavanje i statičku analizu koda, kreirana od strane **Antigravity Coder-a** za **Ultron asistenta**.
 
 ---

@@ -1,3 +1,7 @@
+"""
+Jarvis Omni Agent API
+Made by Pedja — https://github.com/Medjed42/ultron
+"""
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from agents.omni_intelligence import OmniIntelligenceAgent
@@ -6,7 +10,7 @@ import threading
 _workflow_lock = threading.Lock()
 from workflows.client_acquisition import run_restaurant_acquisition_workflow
 
-app = FastAPI(title="Ultron Research API")
+app = FastAPI(title="Ultron Research API", description="Made by Pedja (https://github.com/Medjed42/ultron)", version="2.0.0")
 orchestrator = OmniIntelligenceAgent()
 
 class TaskRequest(BaseModel):

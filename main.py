@@ -1,3 +1,8 @@
+"""
+Ultron 2.0 — Personal AI Assistant
+Made by Pedja
+GitHub: https://github.com/Medjed42/ultron
+"""
 import platform as _platform
 import subprocess as _subprocess
 
@@ -2828,6 +2833,10 @@ class CarLive:
                 stopped.set()
 
 def main():
+    print("=" * 60)
+    print("  ULTRON 2.0 — Personal AI Assistant")
+    print("  Made by Pedja | GitHub: https://github.com/Medjed42/ultron")
+    print("=" * 60)
     ui = CarUI("face.png")
 
     def runner():

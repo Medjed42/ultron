@@ -117,8 +117,9 @@ def _read_full_config() -> dict:
 # Single source of truth for the release name — the window title, the header
 # badge and the readme must never disagree again.
 APP_NAME     = "Ultron 2.0"
-APP_CREDIT   = "Ultron 2.0"
-APP_VERSION  = f"{APP_NAME}  /  {APP_CREDIT}"
+APP_CREDIT   = "Made by Pedja"
+APP_GITHUB   = "https://github.com/Medjed42/ultron"
+APP_VERSION  = f"{APP_NAME}  /  {APP_CREDIT}  ({APP_GITHUB})"
 APP_PROTOCOL = "ULTRON / 2.0"
 
 _DEFAULT_W, _DEFAULT_H = 1440, 880
@@ -3676,7 +3677,7 @@ class MainWindow(QMainWindow):
         if _ui_color and _ui_color.lower() != DEFAULT_UI_COLOR:
             apply_ui_accent(_ui_color)
 
-        self.setWindowTitle(f"{_display} 2.0 — {APP_CREDIT}")
+        self.setWindowTitle(f"{_display} 2.0 — {APP_CREDIT} — {APP_GITHUB}")
         self.setMinimumSize(_MIN_W, _MIN_H)
         self.resize(_DEFAULT_W, _DEFAULT_H)
 
@@ -7657,7 +7658,7 @@ class MainWindow(QMainWindow):
 
         lay.addWidget(_fl("[F4] Mute  ·  [F11] Fullscreen"))
         lay.addStretch()
-        lay.addWidget(_fl(APP_CREDIT, C.PRI_DIM))
+        lay.addWidget(_fl(f"{APP_CREDIT}  ·  {APP_GITHUB}", C.PRI_DIM))
         return w
 
     def _on_file_selected(self, path: str):
@@ -8117,7 +8118,7 @@ class MainWindow(QMainWindow):
         """Update all name/theme-dependent UI elements and persist to config."""
         self._assistant_name = name.strip() or "ULTRON"
         display = self._assistant_name.upper()
-        self.setWindowTitle(f"{display} 2.0 — {APP_CREDIT}")
+        self.setWindowTitle(f"{display} 2.0 — {APP_CREDIT} — {APP_GITHUB}")
         self._title_lbl.setText(display)
         self._sub_lbl.setText(f"{APP_NAME.upper()}  •  COMMAND CENTER")
         self._log._ai_name_lc = self._assistant_name.lower()

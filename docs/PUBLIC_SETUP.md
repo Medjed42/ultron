@@ -1,5 +1,8 @@
 # Public source setup
 
+> **Ultron 2.0 — Made by Pedja** | GitHub: [https://github.com/Medjed42/ultron](https://github.com/Medjed42/ultron)
+
+
 This source export contains no configured owner account. API keys, OAuth grants,
 passwords, linked sessions, private certificates, account-status caches, personal
 memory, conversations, lead databases, generated sites, logs, local-session
